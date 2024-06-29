@@ -22,7 +22,7 @@ then
     cd ../../ 
 fi
 
-bash create_dataset.sh 1
+bash create_dataset.sh 
 echo "classifying objects..."
 python src/test_net.py \
                    --test-batch-size 64 \

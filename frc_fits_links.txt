@@ -1,1 +1,1 @@
-https://archive.stsci.edu/hlsps/legus/ngc1566/ngc1566_drc.tar.gz
+https://archive.stsci.edu/hlsps/legus/ic4247/ic4247_drc.tar.gz

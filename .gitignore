@@ -12,4 +12,5 @@ src/__pycache__/
 src/utils/__pycache__/
 .ipynb_checkpoints/
 data/test_raw_32x32.dat
-
+output/
+.DS_Store
