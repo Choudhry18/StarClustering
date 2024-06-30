@@ -31,11 +31,11 @@ def create_target_db(tab=None, target=None, sz=22):
 
     # load .tab file:
     if 'ngc1313' in target: # has different column number for class in .readme file
-        sid,x,y=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2),unpack=True)
+        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,35),unpack=True)
     elif any(ext in target for ext in ('ngc3351','ngc4242','ngc45')):
-        sid,x,y=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2),unpack=True)
+        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,34),unpack=True)
     else:
-        sid,x,y=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2),unpack=True)
+        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,33),unpack=True)
 
     # Load FITS data
     file_names = [file for file in sorted(os.listdir('legus/frc_fits_files/')) if target in file]
@@ -65,7 +65,7 @@ def create_target_db(tab=None, target=None, sz=22):
                      np.logical_and(y > w+1 , (ty - y) > w+1))) \
     
     # to discard candidates close to border ([x,y] < w)
-    sid, x, y = sid[good], x[good], y[good]
+    sid, x, y, classCol = sid[good], x[good], y[good], classCol[good]
     slices = []
     if sz%2 == 1:
         ww = 1
@@ -85,7 +85,8 @@ def create_target_db(tab=None, target=None, sz=22):
     coords = np.concatenate((np.asarray(x, dtype=np.int64)[:,np.newaxis], \
                         np.asarray(y, dtype=np.int64)[:,np.newaxis]),axis=1)
     ids = np.asarray(sid, dtype=np.int64)
-    return slices, coords, ids
+    classCols = np.asarray(classCol, dtype=np.int64)
+    return slices, coords, ids, classCols
 
 
 def load_db(file_name):
@@ -106,7 +107,7 @@ def load_db(file_name):
     """
     with open(file_name, 'rb') as infile:
         dset = pickle.load(infile)
-    return dset['data'], dset['coordinates'], dset['ids']
+    return dset['data'], dset['coordinates'], dset['ids'], dset['classCols']
 
 
 def get_name(name):

@@ -53,20 +53,22 @@ if __name__ == '__main__':
     coords = np.array([], dtype=np.int64).reshape(0,2)
     ids = np.array([], dtype=np.int64).reshape(0,)
     galaxies = np.array([], dtype=np.int64).reshape(0,)
+    classes = np.array([], dtype=np.int64).reshape(0,)
     for i in range(len(files)):
         t_ini = time.time()
         file_name = join(data_dir,files[i])
         if not os.path.exists(file_name): sys.exit('ERROR: file %s does not exist'%file_name)
-        target_data, target_coords, target_ids = du.load_db(file_name)
+        target_data, target_coords, target_ids, target_classes = du.load_db(file_name)
         data = np.concatenate((data, target_data), axis=0)
         coords = np.concatenate((coords, target_coords), axis=0)
         ids = np.concatenate((ids, target_ids), axis=0)
+        classes = np.concatenate((classes, target_classes), axis=0)
         strs = [files[i][:-4] for x in range(len(target_ids))]
         galaxies = np.concatenate((galaxies, strs), axis=0)
     
     # Save test set
     db_name = 'test_'+dataset_info+str(sz)+'x'+str(sz)
-    dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids}
+    dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'classes': classes}
     with open(os.path.join('data', db_name)+'.dat', 'wb') as outfile:
                     pickle.dump(dataset, outfile, pickle.HIGHEST_PROTOCOL)
     print('dataset shape: %s' % (str(data.shape)))
