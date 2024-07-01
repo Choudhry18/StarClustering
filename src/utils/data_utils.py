@@ -107,7 +107,7 @@ def load_db(file_name):
     """
     with open(file_name, 'rb') as infile:
         dset = pickle.load(infile)
-    return dset['data'], dset['coordinates'], dset['ids'], dset['classCols']
+    return dset['data'], dset['coordinates'], dset['ids'], dset['classes']
 
 
 def get_name(name):

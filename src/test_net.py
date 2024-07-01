@@ -46,7 +46,7 @@ def parse_args():
 args = parse_args()
 
 # loading dataset
-data_test, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
+data_test, _, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
 label_test = np.zeros((data_test.shape[0]))
 mean = np.load(args.data_dir+'mean.npy')
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     # loading dataset
-    data_test, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
+    data_test, _, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
     label_test = np.zeros((data_test.shape[0]))
     mean = np.load(args.data_dir+'mean.npy')
 
@@ -128,6 +128,6 @@ if __name__ == '__main__':
 
     start_time = time.time()
     test_accuracy, targets, predictions, scores = test(test_loader, args)     
-    
+    print(test_accuracy)
     # save scores (predictions + targets)
     np.save(os.path.join('output','scores'), scores)
