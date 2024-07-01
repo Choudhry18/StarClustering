@@ -128,6 +128,5 @@ if __name__ == '__main__':
 
     start_time = time.time()
     test_accuracy, targets, predictions, scores = test(test_loader, args)     
-    print(test_accuracy)
     # save scores (predictions + targets)
     np.save(os.path.join('output','scores'), scores)
