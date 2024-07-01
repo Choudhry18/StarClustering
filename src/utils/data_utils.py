@@ -5,7 +5,7 @@ import numpy as np
 from astropy.io import fits
 
 
-def create_target_db(tab=None, target=None, sz=22):
+def create_target_db(tab=None, target=None, sz=22, human_inspected_only = True):
     """
     Function for loading of CAT annotations, FITS file, and creation of numpy array
     with all star cluster candidates. Size of output 'slices' is (N x 1 x sz xsz),
@@ -29,13 +29,22 @@ def create_target_db(tab=None, target=None, sz=22):
     acs606814 = ['ic4247','ngc3738','ngc5238','ngc5474','ngc5477','ugc1249','ugc685','ugc7408','ugca281']
     acs435555814 =['ngc1313-e','ngc1313-w','ngc4449','ngc5194-ngc5195-mosaic','ngc5253','ngc628-c']
 
-    # load .tab file:
-    if 'ngc1313' in target: # has different column number for class in .readme file
-        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,35),unpack=True)
-    elif any(ext in target for ext in ('ngc3351','ngc4242','ngc45')):
-        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,34),unpack=True)
+    if 'ngc1313' in target:
+        col_num = 35
+    elif any(ext in target for ext in ('ngc3351', 'ngc4242', 'ngc45')):
+        col_num = 34
     else:
-        sid,x,y,classCol=np.loadtxt('legus/tab_files/'+tab,usecols=(0,1,2,33),unpack=True)
+        col_num = 33
+
+    sid, x, y, classCol = np.loadtxt(f'legus/tab_files/{tab}', usecols=(0, 1, 2, col_num), unpack=True)
+
+    if(human_inspected_only):
+        # Filter out rows where classCol is 0
+        valid_indices = np.where(classCol != 0)[0]
+        sid = sid[valid_indices]
+        x = x[valid_indices]
+        y = y[valid_indices]
+        classCol = classCol[valid_indices]
 
     # Load FITS data
     file_names = [file for file in sorted(os.listdir('legus/frc_fits_files/')) if target in file]

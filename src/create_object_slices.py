@@ -53,7 +53,7 @@ if __name__ == '__main__':
             tab = du.get_name(tab_filenames[i]) 
 
             tin = time.time()
-            slices, coords, ids, classes = du.create_target_db(tab, target, sz)
+            slices, coords, ids, classes = du.create_target_db(tab, target, sz, True)
             data = {'data':slices, 'coordinates':coords, 'ids':ids, 'classes': classes}
               
             with open(os.path.join(data_dir, target)+'.dat', 'wb') as outfile:

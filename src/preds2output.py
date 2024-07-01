@@ -14,17 +14,15 @@ scores = np.load('output/scores.npy')
 scores = softmax(scores,axis=1)
 preds = np.argmax(scores,axis=1)
 
-valid_indices = true_labels != 0
-filtered_true_labels = true_labels[valid_indices]
-filtered_preds = preds[valid_indices] + 1
-accuracy = np.mean(filtered_preds == filtered_true_labels)
+preds = preds + 1
+accuracy = np.mean(preds == true_labels)
 print(f"Accuracy (excluding label 0): {accuracy:.4f}")
 with open('output/predictions.csv', 'w') as csvfile:
     filewriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
     filewriter.writerow(['Galaxy', 'Id', 'X', 'Y','Prediction'])
     for i in range(len(ids)):
-        filewriter.writerow([galaxies[i], ids[i], coords[i][0], coords[i][1], preds[i]+1])
+        filewriter.writerow([galaxies[i], ids[i], coords[i][0], coords[i][1], preds[i]])
 
 targets = np.unique(galaxies)
 for target in targets:
@@ -41,17 +39,3 @@ for target in targets:
             row.append('[%.2f - %.2f - %.2f - %.2f]'%(scores[i][0],scores[i][1],scores[i][2],scores[i][3]))
             writer.writerow(row)
 
-
-unique_labels, counts = np.unique(filtered_true_labels, return_counts=True)
-
-# Print the occurrences
-print("Label counts in filtered_true_labels:")
-for label, count in zip(unique_labels, counts):
-    print(f"Label {label}: {count} times")
-
-unique_labels, counts = np.unique(filtered_preds, return_counts=True)
-
-# Print the occurrences
-print("Label counts in filtered_preds:")
-for label, count in zip(unique_labels, counts):
-    print(f"Label {label}: {count} times")
