@@ -8,7 +8,7 @@ from scipy.special import softmax
 with open('data/test_raw_32x32.dat', 'rb') as infile:
     dset = pickle.load(infile)
 
-ids, galaxies, coords, true_labels = dset['ids'], dset['galaxies'], dset['coordinates'], dset['classes']
+ids, galaxies, coords, true_labels = dset['ids'], dset['galaxies'], dset['coordinates'], dset['labels']
 
 scores = np.load('output/scores.npy')
 scores = softmax(scores,axis=1)

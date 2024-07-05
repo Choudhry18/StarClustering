@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import numpy as np
-
+import pickle
 sys.path.insert(0, './src/utils')
 sys.path.insert(0, './model')
 
@@ -17,6 +17,39 @@ import torch.utils.data as torch_du
 from torch.autograd import Variable
 from sklearn.model_selection import train_test_split
 from starcnet import Net
+import torch.nn.init as init
+
+
+def init_weights(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        init.xavier_normal_(m.weight)
+        if m.bias is not None:
+            m.bias.data.fill_(0.01)
+
+
+def parse_args():
+    """
+    Parse input arguments
+    """
+    parser = argparse.ArgumentParser(description='Train a model for star cluser classification')
+    parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
+                        help='input batch size for testing (default: 64)')
+    parser.add_argument('--data_dir', dest='data_dir', help='test dataset directory',
+                        default='data/', type=str)
+    parser.add_argument('--dataset', dest='dataset', help='training dataset file reference',
+                        default='raw_32x32', type=str)
+    parser.add_argument('--gpu', dest='gpu', help='CUDA visible device',
+                        default='', type=str)
+    parser.add_argument('--cuda', action='store_true', default=False,
+                        help='enables CUDA training')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--save_dir', dest='save_dir', help='save dir for scores',
+                        default='model/', type=str)
+    parser.add_argument('--checkpoint', dest='checkpoint',
+                        help='checkpoint to load network', default='', type=str)
+    args = parser.parse_args()
+    return args
 
 
 def train(train_loader, model, criterion, optimizer, args):
@@ -38,20 +71,30 @@ if __name__ == '__main__':
     args = parse_args()
 
     # loading dataset
-    data_test, _, _, true_label = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
-    label_test = np.zeros((data_test.shape[0]))
+    with open('data/train_raw_32x32.dat', 'rb') as infile:
+        dset = pickle.load(infile)
+    data, label = dset['data'], dset['train']
     mean = np.load(args.data_dir+'mean.npy')
 
     # subtract mean
-    data_test -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
-    tdata = torch.from_numpy(data_test)
+    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=42)
+
+
+
+    tdata = torch.from_numpy(train_data)
     tdata = tdata.float()
-    tlabel = torch.from_numpy(np.transpose(label_test))
+    tlabel = torch.from_numpy(train_labels)
     tlabel = tlabel.long()
+    vdata = torch.from_numpy(val_data)
+    vdata = tdata.float()
+    vlabel = torch.from_numpy(val_labels)
+    vlabel = vlabel.long()
     testd = torch_du.TensorDataset(tdata, tlabel)
-    test_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
-    
+    train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
+    vald = torch_du.TensorDataset(vdata, vlabel)
+    val_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
     args.cuda = args.cuda and torch.cuda.is_available()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -60,7 +103,11 @@ if __name__ == '__main__':
         torch.cuda.manual_seed(args.seed)
 
     model = Net()
-    
+    # ADAM Optimizer
+    model.apply(init_weights)
+    learning_rate = 1e-4
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
     if args.checkpoint != '':
         model_dict = model.state_dict()
         if args.cuda:
@@ -75,6 +122,56 @@ if __name__ == '__main__':
         model.cuda()
 
     start_time = time.time()
-    test_accuracy, targets, predictions, scores = test(test_loader, args)     
-    # save scores (predictions + targets)
-    np.save(os.path.join('output','scores'), scores)
+    # Training loop
+    num_epochs = 15
+    best_val_loss = float('inf')
+    patience = 3  # for early stopping
+
+    for epoch in range(num_epochs):
+        model.train()
+        running_loss = 0.0
+
+        for data, target in train_loader:
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+
+        # Validation
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for data, target in val_loader:
+                output = model(data)
+                loss = criterion(output, target)
+                val_loss += loss.item()
+                _, predicted = torch.max(output.data, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+
+        val_loss /= len(val_loader)
+        val_accuracy = 100 * correct / total
+
+        print(f'Epoch {epoch+1}, Train Loss: {running_loss/len(train_loader)}, Val Loss: {val_loss}, Val Accuracy: {val_accuracy}%')
+
+        # Early stopping
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_wts = model.state_dict()
+            patience_counter = 0
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                print("Early stopping")
+                break
+
+    # Load best model weights
+    model.load_state_dict(best_model_wts)
+
+    # Save the trained model
+    torch.save(model.state_dict(), 'best_model.pth')

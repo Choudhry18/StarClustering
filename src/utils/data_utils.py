@@ -94,8 +94,8 @@ def create_target_db(tab=None, target=None, sz=22, human_inspected_only = True):
     coords = np.concatenate((np.asarray(x, dtype=np.int64)[:,np.newaxis], \
                         np.asarray(y, dtype=np.int64)[:,np.newaxis]),axis=1)
     ids = np.asarray(sid, dtype=np.int64)
-    classCols = np.asarray(classCol, dtype=np.int64)
-    return slices, coords, ids, classCols
+    labels = np.asarray(classCol, dtype=np.int64)
+    return slices, coords, ids, labels
 
 
 def load_db(file_name):
