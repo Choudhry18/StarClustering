@@ -13,8 +13,6 @@ ids, galaxies, coords, true_labels = dset['ids'], dset['galaxies'], dset['coordi
 scores = np.load('output/scores.npy')
 scores = softmax(scores,axis=1)
 preds = np.argmax(scores,axis=1)
-
-preds = preds + 1
 accuracy = np.mean(preds == true_labels)
 print(f"Accuracy (excluding label 0): {accuracy:.4f}")
 with open('output/predictions.csv', 'w') as csvfile:

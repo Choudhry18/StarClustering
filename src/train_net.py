@@ -52,20 +52,6 @@ def parse_args():
     return args
 
 
-def train(train_loader, model, criterion, optimizer, args):
-    model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        if args.cuda:
-            data, target = data.cuda(), target.cuda()
-        data, target = Variable(data), Variable(target)
-        optimizer.zero_grad()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-        optimizer.step()
-    return loss.item()
-
-
 if __name__ == '__main__':
 
     args = parse_args()

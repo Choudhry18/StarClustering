@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import numpy as np
+import pickle
 
 sys.path.insert(0, './src/utils')
 sys.path.insert(0, './model')
@@ -38,71 +39,73 @@ def parse_args():
     parser.add_argument('--save_dir', dest='save_dir', help='save dir for scores',
                         default='model/', type=str)
     parser.add_argument('--checkpoint', dest='checkpoint',
-                        help='checkpoint to load network', default='starcnet.pth', type=str)
+                        help='checkpoint to load network', default='best_model.pth', type=str)
     args = parser.parse_args()
     return args
 
 
 args = parse_args()
 
-# loading dataset
-data_test, _, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
-label_test = np.zeros((data_test.shape[0]))
+with open('data/test_raw_32x32.dat', 'rb') as infile:
+    dset = pickle.load(infile)
+data, label = dset['data'], dset['labels']
 mean = np.load(args.data_dir+'mean.npy')
 
 # subtract mean
-data_test -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
-tdata = torch.from_numpy(data_test)
+tdata = torch.from_numpy(data)
 tdata = tdata.float()
-tlabel = torch.from_numpy(np.transpose(label_test))
+tlabel = torch.from_numpy(np.transpose(label))
 tlabel = tlabel.long()
 test = torch_du.TensorDataset(tdata, tlabel)
 test_loader = torch_du.DataLoader(test, batch_size=args.test_batch_size, shuffle=False)
 
 
-def test(test_loader, args):
+def eval(test_loader, args):
     model.eval()
     correct = 0
     num_data = 0
-    predictions = np.array([], dtype=np.int64).reshape(0)
-    scores = np.array([], dtype=np.float32).reshape(0,4)
-    targets = np.array([], dtype=np.int64).reshape(0)
+    # predictions = np.array([], dtype=np.int64).reshape(0)
+    # scores = np.array([], dtype=np.float32).reshape(0,4)
+    # targets = np.array([], dtype=np.int64).reshape(0)
     with torch.no_grad():
-        for batch_idx, (data, target) in enumerate(test_loader):
+        for _, (data, target) in enumerate(test_loader):
             if args.cuda:
                 data, target = data.cuda(), target.cuda()
             data, target = Variable(data), Variable(target)
-            num_data += len(data)
             output = model(data)
             # get the index of the max log-probability
             pred = output.data.max(1)[1]
-            correct += pred.eq(target.data).cpu().sum()
-            acccuracy_batch = 100. * correct / num_data
-            predictions = np.concatenate((predictions, pred.cpu().numpy()))
-            targets = np.concatenate((targets, target.data.cpu().numpy()))
-            scores = np.concatenate((scores, output.data.cpu().numpy()),axis=0)
-    return acccuracy_batch, targets, predictions, scores
+            correct += pred.eq(target.data).cpu().sum().item()
+            num_data += len(data)
+            # predictions = np.concatenate((predictions, pred.cpu().numpy()))
+            # targets = np.concatenate((targets, target.data.cpu().numpy()))
+            # scores = np.concatenate((scores, output.data.cpu().numpy()), axis=0)
+    # Calculate accuracy after the loop
+    test_accuracy = 100. * correct / num_data
+    return test_accuracy
+    # return acccuracy_batch, targets, predictions, scores
 
 
 if __name__ == '__main__':
 
     args = parse_args()
 
-    # loading dataset
-    data_test, _, _, _ = du.load_db(os.path.join(args.data_dir,'test_'+args.dataset+'.dat'))
-    label_test = np.zeros((data_test.shape[0]))
+    with open('data/test_raw_32x32.dat', 'rb') as infile:
+        dset = pickle.load(infile)
+    data, label = dset['data'], dset['labels']
     mean = np.load(args.data_dir+'mean.npy')
 
     # subtract mean
-    data_test -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
-    tdata = torch.from_numpy(data_test)
+    tdata = torch.from_numpy(data)
     tdata = tdata.float()
-    tlabel = torch.from_numpy(np.transpose(label_test))
+    tlabel = torch.from_numpy(np.transpose(label))
     tlabel = tlabel.long()
-    testd = torch_du.TensorDataset(tdata, tlabel)
-    test_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
+    test = torch_du.TensorDataset(tdata, tlabel)
+    test_loader = torch_du.DataLoader(test, batch_size=args.test_batch_size, shuffle=False)
     
     args.cuda = args.cuda and torch.cuda.is_available()
 
@@ -127,6 +130,6 @@ if __name__ == '__main__':
         model.cuda()
 
     start_time = time.time()
-    test_accuracy, targets, predictions, scores = test(test_loader, args)     
+    test_accuracy = eval(test_loader, args)     
     # save scores (predictions + targets)
-    np.save(os.path.join('output','scores'), scores)
+    print(test_accuracy)
