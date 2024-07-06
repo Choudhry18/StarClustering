@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     # Training loop
-    num_epochs = 4
+    num_epochs = 15
     best_val_loss = float('inf')
     patience = 3  # for early stopping
 
@@ -176,4 +176,4 @@ if __name__ == '__main__':
     model.load_state_dict(best_model_wts)
 
     # Save the trained model
-    torch.save(model.state_dict(), 'best_model.pth')
+    torch.save(model.state_dict(), 'model/best_model.pth')

@@ -79,9 +79,7 @@ if __name__ == '__main__':
         galaxies = np.concatenate((galaxies, strs), axis=0)
     labels = labels - 1
     # Save test set
-    print(args.testing)
     if args.testing:     
-
         db_name = 'test_'+dataset_info+str(sz)+'x'+str(sz)
         dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'labels': labels}
         with open(os.path.join('data', db_name)+'.dat', 'wb') as outfile:

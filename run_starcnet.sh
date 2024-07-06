@@ -24,7 +24,7 @@ fi
 
 bash create_dataset.sh 32 True
 echo "classifying objects..."
-python src/test_net.py \
+python src/run_net.py \
                    --test-batch-size 64 \
                    --data_dir data/ \
                    --dataset raw_32x32\
