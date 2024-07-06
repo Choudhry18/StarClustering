@@ -16,7 +16,16 @@ Script for creating dataset to predict. Separate sets with different galaxies.
 
 [GPS - 03/09/2019]
 """
-
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+    
 def parse_args():
     """
     Parse input arguments
@@ -24,7 +33,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Create candidate slices')
     parser.add_argument('--slice-size', type=int, default=22,
                         help='window size for visualization (slice size: sz x sz)')
-    parser.add_argument('--testing', type=bool, default=True,
+    parser.add_argument('--testing', type=str2bool,
                         help='Set the mode for Testing')
     args = parser.parse_args()
     return args
@@ -61,19 +70,20 @@ if __name__ == '__main__':
         t_ini = time.time()
         file_name = join(data_dir,files[i])
         if not os.path.exists(file_name): sys.exit('ERROR: file %s does not exist'%file_name)
-        target_data, target_coords, target_ids, target_classes = du.load_db(file_name)
+        target_data, target_coords, target_ids, target_labels = du.load_db(file_name)
         data = np.concatenate((data, target_data), axis=0)
         coords = np.concatenate((coords, target_coords), axis=0)
         ids = np.concatenate((ids, target_ids), axis=0)
-        labels = np.concatenate((classes, target_classes), axis=0)
+        labels = np.concatenate((labels, target_labels), axis=0)
         strs = [files[i][:-4] for x in range(len(target_ids))]
         galaxies = np.concatenate((galaxies, strs), axis=0)
-    
+    labels = labels - 1
     # Save test set
+    print(args.testing)
     if args.testing:     
 
         db_name = 'test_'+dataset_info+str(sz)+'x'+str(sz)
-        dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'classes': labels}
+        dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'labels': labels}
         with open(os.path.join('data', db_name)+'.dat', 'wb') as outfile:
                         pickle.dump(dataset, outfile, pickle.HIGHEST_PROTOCOL)
         print('dataset shape: %s' % (str(data.shape)))
@@ -84,9 +94,12 @@ if __name__ == '__main__':
         train_db_name = 'train_'+dataset_info+str(sz)+'x'+str(sz)
         train_dataset = {'data':data_train, 'labels': label_train}
         test_dataset = {'data':data_test, 'labels': label_test}
+        print(train_db_name)
         with open(os.path.join('data', train_db_name)+'.dat', 'wb') as outfile:
                 pickle.dump(train_dataset, outfile, pickle.HIGHEST_PROTOCOL)
 
         with open(os.path.join('data', test_db_name)+'.dat', 'wb') as outfile:
                 pickle.dump(test_dataset, outfile, pickle.HIGHEST_PROTOCOL)
-          
+        
+        print('dataset shape: %s' % (str(data_train.shape)))
+        print('dataset shape: %s' % (str(label_train.shape)))

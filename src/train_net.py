@@ -73,7 +73,7 @@ if __name__ == '__main__':
     # loading dataset
     with open('data/train_raw_32x32.dat', 'rb') as infile:
         dset = pickle.load(infile)
-    data, label = dset['data'], dset['train']
+    data, label = dset['data'], dset['labels']
     mean = np.load(args.data_dir+'mean.npy')
 
     # subtract mean
@@ -88,9 +88,11 @@ if __name__ == '__main__':
     tlabel = torch.from_numpy(train_labels)
     tlabel = tlabel.long()
     vdata = torch.from_numpy(val_data)
-    vdata = tdata.float()
+    vdata = vdata.float()
     vlabel = torch.from_numpy(val_labels)
     vlabel = vlabel.long()
+    print(tdata.shape, tlabel.shape)
+    print(vdata.shape, vlabel.shape)
     testd = torch_du.TensorDataset(tdata, tlabel)
     train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
     vald = torch_du.TensorDataset(vdata, vlabel)
@@ -123,7 +125,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     # Training loop
-    num_epochs = 15
+    num_epochs = 4
     best_val_loss = float('inf')
     patience = 3  # for early stopping
 

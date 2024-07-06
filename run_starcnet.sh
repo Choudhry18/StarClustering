@@ -22,7 +22,7 @@ then
     cd ../../ 
 fi
 
-bash create_dataset.sh 
+bash create_dataset.sh 32 True
 echo "classifying objects..."
 python src/test_net.py \
                    --test-batch-size 64 \
@@ -30,7 +30,7 @@ python src/test_net.py \
                    --dataset raw_32x32\
                    --save_dir model/ \
                    --cuda  --gpu 0 \
-                   --checkpoint starcnet.pth \
+                   --checkpoint best_model.pth \
 
 python src/preds2output.py
 
