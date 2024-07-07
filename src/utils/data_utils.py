@@ -40,16 +40,16 @@ def create_target_db(tab=None, target=None, sz=22, human_inspected_only = True):
 
     if(human_inspected_only):
         print(tab)
-        classCol_int = classCol.astype(int)
-        class_counts = np.bincount(classCol_int)
-        for value, count in enumerate(class_counts):
-            print(f'Class {value}: {count} instances')
         # Filter out rows where classCol is 0
-        valid_indices = np.where(classCol != 0)[0]
+        valid_indices = np.where(np.isin(classCol, [1, 2, 3, 4]))[0]
         sid = sid[valid_indices]
         x = x[valid_indices]
         y = y[valid_indices]
         classCol = classCol[valid_indices]
+        classCol_int = classCol.astype(int)
+        class_counts = np.bincount(classCol_int)
+        for value, count in enumerate(class_counts):
+            print(f'Class {value}: {count} instances')
 
     # Load FITS data
     file_names = [file for file in sorted(os.listdir('legus/frc_fits_files/')) if target in file]
@@ -156,7 +156,7 @@ def get_tab_filenames(targets):
         print(targets)
         target_tabs = []
         for tab in tabs:
-            if ('_' + get_name(target) + '_') in tab or ("_" + get_name(target) + "-") in tab:
+            if ('_' + get_name(target) + '_') in tab or ("_" + get_name(target) + "-") in tab or ("_" + get_name(target)) in tab:
                 target_tabs.append(tab)
         if target_tabs:
             merged_content = merge_tab_files(target_tabs)
