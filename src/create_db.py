@@ -77,7 +77,8 @@ if __name__ == '__main__':
         labels = np.concatenate((labels, target_labels), axis=0)
         strs = [files[i][:-4] for x in range(len(target_ids))]
         galaxies = np.concatenate((galaxies, strs), axis=0)
-    labels = labels - 1
+    # Making labels 0 indexed
+    labels -= 1
     # Save test set
     if args.testing:     
         db_name = 'test_'+dataset_info+str(sz)+'x'+str(sz)

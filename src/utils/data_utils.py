@@ -39,6 +39,11 @@ def create_target_db(tab=None, target=None, sz=22, human_inspected_only = True):
     sid, x, y, classCol = np.loadtxt(f'legus/tab_files/{tab}', usecols=(0, 1, 2, col_num), unpack=True)
 
     if(human_inspected_only):
+        print(tab)
+        classCol_int = classCol.astype(int)
+        class_counts = np.bincount(classCol_int)
+        for value, count in enumerate(class_counts):
+            print(f'Class {value}: {count} instances')
         # Filter out rows where classCol is 0
         valid_indices = np.where(classCol != 0)[0]
         sid = sid[valid_indices]
@@ -129,19 +134,37 @@ def get_name(name):
         return name
 
 
+def merge_tab_files(tab_files):
+    """
+    Merge content of multiple tab files and delete the old files
+    """
+    merged_content = ""
+    for tab_file in tab_files:
+        tab_file_path = os.path.join('legus/tab_files', tab_file)
+        with open(tab_file_path, 'r') as file:
+            merged_content += file.read()
+        os.remove(tab_file_path)
+    return merged_content
+
 def get_tab_filenames(targets):
     """
-    Retrieve tab filenames from a target list
+    Retrieve and merge tab filenames from a target list
     """
     tab_filenames = []
     tabs = os.listdir('legus/tab_files')
     for target in targets:
-        found = False
+        print(targets)
+        target_tabs = []
         for tab in tabs:
-            if ('_'+get_name(target)+'_') in tab:
-                tab_filenames.append(tab)
-                found = True
-        if not found:
-            sys.exit('NOT FOUND: tab file not found for galaxy %s'%(target))
+            if ('_' + get_name(target) + '_') in tab or ("_" + get_name(target) + "-") in tab:
+                target_tabs.append(tab)
+        if target_tabs:
+            merged_content = merge_tab_files(target_tabs)
+            merged_tab_filename = f"merged_{get_name(target)}.tab"
+            with open(os.path.join('legus/tab_files', merged_tab_filename), 'w') as merged_file:
+                merged_file.write(merged_content)
+            tab_filenames.append(merged_tab_filename)
+        else:
+            sys.exit(f'NOT FOUND: tab file not found for galaxy {target}')
+    
     return tab_filenames
-

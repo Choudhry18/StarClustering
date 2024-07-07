@@ -6,3 +6,4 @@ astropy
 scipy
 scikit-image
 wget
+scikit-learn
