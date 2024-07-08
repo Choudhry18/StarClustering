@@ -31,9 +31,9 @@ def parse_args():
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Create candidate slices')
-    parser.add_argument('--slice-size', type=int, default=22,
+    parser.add_argument('--slice-size', type=int, default=32,
                         help='window size for visualization (slice size: sz x sz)')
-    parser.add_argument('--testing', type=str2bool,
+    parser.add_argument('--testing', type=str2bool, default=False,
                         help='Set the mode for Testing')
     args = parser.parse_args()
     return args
@@ -101,4 +101,6 @@ if __name__ == '__main__':
                 pickle.dump(test_dataset, outfile, pickle.HIGHEST_PROTOCOL)
         
         print('dataset shape: %s' % (str(data_train.shape)))
-        print('dataset shape: %s' % (str(label_train.shape)))
+        print('label shape: %s' % (str(label_train.shape)))
+        print('dataset shape train: %s' % (str(data_test.shape)))
+        print('label shape test: %s' % (str(label_test.shape)))

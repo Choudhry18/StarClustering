@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import os
 import sys
 import time
@@ -8,7 +6,6 @@ import pickle
 sys.path.insert(0, './src/utils')
 sys.path.insert(0, './model')
 
-import data_utils as du
 import argparse
 import torch
 import torch.nn as nn
@@ -32,7 +29,7 @@ def parse_args():
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Train a model for star cluser classification')
-    parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--test-batch-size', type=int, default=16, metavar='N',
                         help='input batch size for testing (default: 64)')
     parser.add_argument('--data_dir', dest='data_dir', help='test dataset directory',
                         default='data/', type=str)
@@ -61,11 +58,11 @@ if __name__ == '__main__':
         dset = pickle.load(infile)
     data, label = dset['data'], dset['labels']
     mean = np.load(args.data_dir+'mean.npy')
-
-    # subtract mean
+    label_counts = np.bincount(label)
+    
     data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
-    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=42)
+    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=50)
 
 
 
@@ -85,7 +82,10 @@ if __name__ == '__main__':
     val_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
     args.cuda = args.cuda and torch.cuda.is_available()
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    if args.gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+    # Set seeds for reproducibility
     torch.manual_seed(args.seed)
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
@@ -109,24 +109,27 @@ if __name__ == '__main__':
     if args.cuda:
         model.cuda()
 
+
     start_time = time.time()
     # Training loop
-    num_epochs = 15
+    num_epochs = 30
     best_val_loss = float('inf')
     patience = 3  # for early stopping
+    patience_counter = 0
 
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-
+    
         for data, target in train_loader:
+            if args.cuda:
+                data, target = data.cuda(), target.cuda()
             optimizer.zero_grad()
             output = model(data)
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-
         # Validation
         model.eval()
         val_loss = 0.0
@@ -135,6 +138,8 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             for data, target in val_loader:
+                if args.cuda:
+                    data, target = data.cuda(), target.cuda()
                 output = model(data)
                 loss = criterion(output, target)
                 val_loss += loss.item()
@@ -157,9 +162,6 @@ if __name__ == '__main__':
             if patience_counter >= patience:
                 print("Early stopping")
                 break
-
-    # Load best model weights
-    model.load_state_dict(best_model_wts)
 
     # Save the trained model
     torch.save(model.state_dict(), 'model/best_model.pth')

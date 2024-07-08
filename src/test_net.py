@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import os
 import sys
 import time
@@ -9,7 +7,6 @@ import pickle
 sys.path.insert(0, './src/utils')
 sys.path.insert(0, './model')
 
-import data_utils as du
 import argparse
 import torch
 import torch.nn as nn
@@ -95,9 +92,10 @@ if __name__ == '__main__':
     with open('data/test_raw_32x32.dat', 'rb') as infile:
         dset = pickle.load(infile)
     data, label = dset['data'], dset['labels']
+    print('dataset shape: %s' % (str(data.shape)))
+    print('label shape: %s' % (str(label.shape)))
     mean = np.load(args.data_dir+'mean.npy')
 
-    # subtract mean
     data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
     tdata = torch.from_numpy(data)
@@ -118,10 +116,7 @@ if __name__ == '__main__':
     
     if args.checkpoint != '':
         model_dict = model.state_dict()
-        if args.cuda:
-            pretrained_dict = torch.load(args.save_dir+args.checkpoint)
-        else:
-            pretrained_dict = torch.load(args.save_dir+args.checkpoint, map_location=torch.device('cpu'))
+        pretrained_dict = torch.load(args.save_dir+args.checkpoint, map_location=torch.device('cpu'))
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and v.size() == model_dict[k].size() }
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
