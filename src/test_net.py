@@ -88,8 +88,9 @@ def eval(test_loader, args):
 if __name__ == '__main__':
 
     args = parse_args()
-
-    with open('data/test_raw_32x32.dat', 'rb') as infile:
+    args.dataset = args.dataset + "_raw_32x32.dat"
+    dataset_path = os.path.join(args.data_dir, args.dataset)
+    with open(dataset_path, 'rb') as infile:
         dset = pickle.load(infile)
     data, label = dset['data'], dset['labels']
     print('dataset shape: %s' % (str(data.shape)))

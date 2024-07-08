@@ -26,6 +26,8 @@ def parse_args():
                         help='window size for visualization (slice size: sz x sz)')
     parser.add_argument('--testing', action='store_true', default=False,
                         help='Set the mode for Testing')
+    parser.add_argument('--name', default='',
+                    help='Set the mode for Testing')
     args = parser.parse_args()
     return args
 
@@ -71,8 +73,8 @@ if __name__ == '__main__':
     # Making labels 0 indexed
     labels -= 1
     # Save test set
-    if args.testing:     
-        db_name = 'run_'+dataset_info+str(sz)+'x'+str(sz)
+    if args.testing or args.name:     
+        db_name = args.name+ "_" + dataset_info+str(sz)+'x'+str(sz)
         dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'labels': labels}
         with open(os.path.join('data', db_name)+'.dat', 'wb') as outfile:
                         pickle.dump(dataset, outfile, pickle.HIGHEST_PROTOCOL)

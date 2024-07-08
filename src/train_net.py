@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import os
 import sys
 import time
@@ -45,6 +47,8 @@ def parse_args():
                         default='model/', type=str)
     parser.add_argument('--checkpoint', dest='checkpoint',
                         help='checkpoint to load network', default='', type=str)
+    parser.add_argument('--name', dest='name',
+                        help='trained model name', default='best_model', type=str)
     args = parser.parse_args()
     return args
 
@@ -62,10 +66,14 @@ if __name__ == '__main__':
     
     data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
 
-    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=50)
-
-
-
+    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=42)
+    with open('data/ngc3274_raw_32x32.dat', 'rb') as infile:
+        dset = pickle.load(infile)
+    data, label = dset['data'], dset['labels']
+    data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    val_data = np.concatenate((val_data, data), axis=0)
+    val_labels = np.concatenate((val_labels, label), axis=0)
+    
     tdata = torch.from_numpy(train_data)
     tdata = tdata.float()
     tlabel = torch.from_numpy(train_labels)
@@ -96,10 +104,15 @@ if __name__ == '__main__':
     learning_rate = 1e-4
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
+
+    # Gradient clipping, something to change using swarm optmization
+    max_grad_norm = 1.0  # Adjust this value if needed
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+
     if args.checkpoint != '':
         model_dict = model.state_dict()
         if args.cuda:
-            pretrained_dict = torch.load(args.save_dir+args.checkpoint)
+            pretrained_dict = torch.load(args.save_dir+args.checkpoint + '.pth')
         else:
             pretrained_dict = torch.load(args.save_dir+args.checkpoint, map_location=torch.device('cpu'))
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and v.size() == model_dict[k].size() }
@@ -126,6 +139,11 @@ if __name__ == '__main__':
                 data, target = data.cuda(), target.cuda()
             optimizer.zero_grad()
             output = model(data)
+            # Assuming 'output' is your model's output tensor and 'target' is the target tensor
+            if torch.isnan(target).any():
+                print("NaN values found in output or target tensors")
+            if torch.isinf(output).any() or torch.isinf(target).any():
+                print("inf values found in output or target tensors")
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -164,4 +182,4 @@ if __name__ == '__main__':
                 break
 
     # Save the trained model
-    torch.save(model.state_dict(), 'model/best_model.pth')
+    torch.save(model.state_dict(), args.save_dir + args.name + '.pth')
