@@ -1,3 +1,16 @@
+https://archive.stsci.edu/hlsps/legus/ic4247/cluster_catalogs/deterministic/hlsp_legus_hst_acs-wfc3_ic4247_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ic559/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ic559_multiband_v2_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc1313-e/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc1313-e_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc1313-w/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc1313-w_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc1433/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc1433_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc1566/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc1566_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc1705/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc1705_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc3344/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc3344_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc3351/cluster_catalogs/deterministic/hlsp_legus_hst_acs-wfc3_ngc3351_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc3738/cluster_catalogs/deterministic/hlsp_legus_hst_acs-wfc3_ngc3738_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc4242/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc4242_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc4395-n/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc4395-n_multiband_v1_padagb-mwext-avgapcor.tab
+https://archive.stsci.edu/hlsps/legus/ngc4395-s/cluster_catalogs/deterministic/hlsp_legus_hst_acs-wfc3_ngc4395-s_multiband_v1_padagb-mwext-avgapcor.tab
 https://archive.stsci.edu/hlsps/legus/ngc4449/cluster_catalogs/deterministic/hlsp_legus_hst_acs-wfc3_ngc4449_multiband_v2_padagb-mwext-avgapcor.tab
 https://archive.stsci.edu/hlsps/legus/ngc45/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc45_multiband_v1_padagb-mwext-avgapcor.tab
 https://archive.stsci.edu/hlsps/legus/ngc4656/cluster_catalogs/deterministic/hlsp_legus_hst_wfc3_ngc4656_multiband_v1_padagb-mwext-avgapcor.tab

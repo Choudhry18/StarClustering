@@ -16,15 +16,6 @@ Script for creating dataset to predict. Separate sets with different galaxies.
 
 [GPS - 03/09/2019]
 """
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
     
 def parse_args():
     """
@@ -33,7 +24,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Create candidate slices')
     parser.add_argument('--slice-size', type=int, default=32,
                         help='window size for visualization (slice size: sz x sz)')
-    parser.add_argument('--testing', type=str2bool, default=False,
+    parser.add_argument('--testing', action='store_true', default=False,
                         help='Set the mode for Testing')
     args = parser.parse_args()
     return args
@@ -81,7 +72,7 @@ if __name__ == '__main__':
     labels -= 1
     # Save test set
     if args.testing:     
-        db_name = 'test_'+dataset_info+str(sz)+'x'+str(sz)
+        db_name = 'run_'+dataset_info+str(sz)+'x'+str(sz)
         dataset = {'data':data, 'coordinates':coords, 'galaxies':galaxies, 'ids':ids, 'labels': labels}
         with open(os.path.join('data', db_name)+'.dat', 'wb') as outfile:
                         pickle.dump(dataset, outfile, pickle.HIGHEST_PROTOCOL)
@@ -102,5 +93,5 @@ if __name__ == '__main__':
         
         print('dataset shape: %s' % (str(data_train.shape)))
         print('label shape: %s' % (str(label_train.shape)))
-        print('dataset shape train: %s' % (str(data_test.shape)))
+        print('dataset shape test: %s' % (str(data_test.shape)))
         print('label shape test: %s' % (str(label_test.shape)))
