@@ -174,12 +174,12 @@ if __name__ == '__main__':
         accuracy = 100. * correct / len(test_loader.dataset)
         scores.append(accuracy)
         print(f'Fold {fold+1} Accuracy: {accuracy:.2f}%')
-        log_message(f'Fold {fold+1} Accuracy: {accuracy:.2f}%')
+        log_message(log, f'Fold {fold+1} Accuracy: {accuracy:.2f}%')
 
     # Average score
     average_score = np.mean(scores)
     print(f'Average accuracy: {average_score:.2f}%')
-    log_message(f'Fold {fold+1} Accuracy: {accuracy:.2f}%')
+    log_message(log, f'Fold {fold+1} Accuracy: {accuracy:.2f}%')
     # for epoch in range(num_epochs):
     #     model.train()
     #     running_loss = 0.0
