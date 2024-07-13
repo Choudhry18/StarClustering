@@ -17,6 +17,8 @@ def parse_args():
                         help='The dataset to augment')
     parser.add_argument('--data_dir', type=str, default="data/",
                     help='The dataset to augment')
+    parser.add_argument('--out', type=str, default="data/",
+                help='name of output dataset')
     args = parser.parse_args()
     return args
 
@@ -36,6 +38,7 @@ class RandomScale:
 if __name__ == '__main__':
     
     args = parse_args()
+    random_scale = RandomScale()
     args.dataset = args.dataset + "_raw_32x32.dat"
     dataset_path = os.path.join(args.data_dir, args.dataset)
     with open(dataset_path, 'rb') as infile:
@@ -53,8 +56,8 @@ if __name__ == '__main__':
     for i, (datum, label) in enumerate(zip(data, labels)):
         if label == 0:
             # Perform horizontal and vertical flips for label 0
-            h_flip = np.fliplr(datum)
-            v_flip = np.flipud(datum)
+            h_flip = np.flip(datum, axis=2)
+            v_flip = np.flip(datum, axis=1)
             transformed_data.extend([h_flip, v_flip])
             transformed_labels.extend([label, label])
         elif label in [1, 2]:
@@ -66,13 +69,36 @@ if __name__ == '__main__':
     # Append transformed data and labels to the original dataset
     data = np.concatenate((data, np.array(transformed_data)))
     labels = np.concatenate((labels, np.array(transformed_labels)))
+    transformed_data = []
+    transformed_labels = []
+    for i, (datum, label) in enumerate(zip(data, labels)):
+        datum_tensor = torch.tensor(datum)
+        scaled_datum = random_scale(datum_tensor)
+        scaled_datum = scaled_datum.numpy()                                                                                                                       
+        transformed_data.append(scaled_datum)
+        transformed_labels.append(label)
+    
+    data = np.concatenate((data, np.array(transformed_data)))
+    labels = np.concatenate((labels, np.array(transformed_labels)))
+    transformed_data = []
+    transformed_labels = []
+    for i, (datum, label) in enumerate(zip(data, labels)):
+        rot_90 = np.rot90(datum, k=1, axes=(1, 2))
+        rot_270 = np.rot90(datum, k=3, axes=(1, 2))                                                                                                                    
+        transformed_data.append(scaled_datum)
+        transformed_labels.append(label)
 
+    data = np.concatenate((data, np.array(transformed_data)))
+    labels = np.concatenate((labels, np.array(transformed_labels)))
     # Verify the label frequencies in the updated dataset
     label_frequencies = np.bincount(labels)
     for label, frequency in enumerate(label_frequencies):
         print(f"Label {label}: {frequency} occurrences")
     datum_shape = data[0].shape
     print(f"Shape of the first datum: {datum_shape}")
+    train_dataset = {'data':data, 'labels': labels}
+    with open(os.path.join('data', args.out)+'_raw_32x32.dat', 'wb') as outfile:
+        pickle.dump(train_dataset, outfile, pickle.HIGHEST_PROTOCOL)
 # Data augmentation transforms
 # data_transforms = transforms.Compose([
 #     transforms.RandomHorizontalFlip(),
