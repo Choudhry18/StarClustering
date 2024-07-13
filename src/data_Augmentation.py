@@ -3,6 +3,8 @@ import os
 import pickle
 import argparse
 import numpy as np
+import torch
+from torchvision import transforms
 
 sys.path.insert(0, './src/utils')
 import data_utils as du
@@ -43,7 +45,34 @@ if __name__ == '__main__':
     label_frequencies = np.bincount(labels)
     for label, frequency in enumerate(label_frequencies):
         print(f"Label {label}: {frequency} occurrences")
+    print(f"Shape of the data: {data[0].shape}")
+    transformed_data = []
+    transformed_labels = []
 
+    # Loop over each item in the dataset
+    for i, (datum, label) in enumerate(zip(data, labels)):
+        if label == 0:
+            # Perform horizontal and vertical flips for label 0
+            h_flip = np.fliplr(datum)
+            v_flip = np.flipud(datum)
+            transformed_data.extend([h_flip, v_flip])
+            transformed_labels.extend([label, label])
+        elif label in [1, 2]:
+            # Perform horizontal flip for labels 1 and 2
+            h_flip = np.fliplr(datum)
+            transformed_data.append(h_flip)
+            transformed_labels.append(label)
+
+    # Append transformed data and labels to the original dataset
+    data = np.concatenate((data, np.array(transformed_data)))
+    labels = np.concatenate((labels, np.array(transformed_labels)))
+
+    # Verify the label frequencies in the updated dataset
+    label_frequencies = np.bincount(labels)
+    for label, frequency in enumerate(label_frequencies):
+        print(f"Label {label}: {frequency} occurrences")
+    datum_shape = data[0].shape
+    print(f"Shape of the first datum: {datum_shape}")
 # Data augmentation transforms
 # data_transforms = transforms.Compose([
 #     transforms.RandomHorizontalFlip(),
