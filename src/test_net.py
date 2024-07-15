@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument('--data_dir', dest='data_dir', help='test dataset directory',
                         default='data/', type=str)
     parser.add_argument('--dataset', dest='dataset', help='training dataset file reference',
-                        default='raw_32x32', type=str)
+                        default='test', type=str)
     parser.add_argument('--gpu', dest='gpu', help='CUDA visible device',
                         default='', type=str)
     parser.add_argument('--cuda', action='store_true', default=False,
@@ -42,6 +42,7 @@ def parse_args():
 
 
 args = parse_args()
+
 
 with open('data/test_raw_32x32.dat', 'rb') as infile:
     dset = pickle.load(infile)

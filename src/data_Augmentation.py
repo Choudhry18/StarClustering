@@ -5,9 +5,7 @@ import argparse
 import numpy as np
 import torch
 from torchvision import transforms
-
-sys.path.insert(0, './src/utils')
-import data_utils as du
+from sklearn.model_selection import train_test_split
 def parse_args():
     """
     Parse input arguments
@@ -17,7 +15,7 @@ def parse_args():
                         help='The dataset to augment')
     parser.add_argument('--data_dir', type=str, default="data/",
                     help='The dataset to augment')
-    parser.add_argument('--out', type=str, default="data/",
+    parser.add_argument('--out', type=str, default="train",
                 help='name of output dataset')
     args = parser.parse_args()
     return args
@@ -44,6 +42,14 @@ if __name__ == '__main__':
     with open(dataset_path, 'rb') as infile:
         dset = pickle.load(infile)
     data, labels = dset['data'] , dset['labels']
+    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.2)
+    test_dataset = {"data" : data_test, "labels": label_test}
+    with open('data/test_raw_32x32.dat', 'wb') as outfile:
+        pickle.dump(test_dataset, outfile, pickle.HIGHEST_PROTOCOL)
+    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.1)
+    val_dataset = {"data" : data_test, "labels": label_test}
+    with open('data/val_raw_32x32.dat', 'wb') as outfile:
+        pickle.dump(val_dataset, outfile, pickle.HIGHEST_PROTOCOL)
     labels = labels.astype(int)
     label_frequencies = np.bincount(labels)
     for label, frequency in enumerate(label_frequencies):

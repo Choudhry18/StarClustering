@@ -24,7 +24,7 @@ def parse_args():
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Create candidate slices')
-    parser.add_argument('--slice-size', type=int, default=22, 
+    parser.add_argument('--slice-size', type=int, default=32, 
                         help='window size for visualization (slice size: sz x sz)')
     args = parser.parse_args()
     return args
@@ -58,4 +58,3 @@ if __name__ == '__main__':
               
             with open(os.path.join(data_dir, target)+'.dat', 'wb') as outfile:
                 pickle.dump(data, outfile, pickle.HIGHEST_PROTOCOL)
-

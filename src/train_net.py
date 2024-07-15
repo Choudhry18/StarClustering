@@ -60,19 +60,16 @@ if __name__ == '__main__':
     # loading dataset
     with open('data/train_raw_32x32.dat', 'rb') as infile:
         dset = pickle.load(infile)
-    data, label = dset['data'], dset['labels']
+    train_data, train_labels = dset['data'], dset['labels']
     mean = np.load(args.data_dir+'mean.npy')
-    label_counts = np.bincount(label)
-    
-    data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
-
-    train_data, val_data, train_labels, val_labels = train_test_split(data, label, test_size=0.1, random_state=42)
-    with open('data/ngc3274_raw_32x32.dat', 'rb') as infile:
+    with open('data/val_raw_32x32.dat', 'rb') as infile:
         dset = pickle.load(infile)
-    data, label = dset['data'], dset['labels']
-    data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
-    val_data = np.concatenate((val_data, data), axis=0)
-    val_labels = np.concatenate((val_labels, label), axis=0)
+    val_data, val_labels = dset['data'], dset['labels']
+    train_data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    val_data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    label_frequencies = np.bincount(train_labels)
+    for label, frequency in enumerate(label_frequencies):
+        print(f"Label {label}: {frequency} occurrences")
     
     tdata = torch.from_numpy(train_data)
     tdata = tdata.float()
@@ -85,7 +82,7 @@ if __name__ == '__main__':
     print(tdata.shape, tlabel.shape)
     print(vdata.shape, vlabel.shape)
     testd = torch_du.TensorDataset(tdata, tlabel)
-    train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
+    train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=True) 
     vald = torch_du.TensorDataset(vdata, vlabel)
     val_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
     args.cuda = args.cuda and torch.cuda.is_available()
@@ -125,7 +122,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     # Training loop
-    num_epochs = 30
+    num_epochs = 15
     best_val_loss = float('inf')
     patience = 3  # for early stopping
     patience_counter = 0
@@ -139,11 +136,6 @@ if __name__ == '__main__':
                 data, target = data.cuda(), target.cuda()
             optimizer.zero_grad()
             output = model(data)
-            # Assuming 'output' is your model's output tensor and 'target' is the target tensor
-            if torch.isnan(target).any():
-                print("NaN values found in output or target tensors")
-            if torch.isinf(output).any() or torch.isinf(target).any():
-                print("inf values found in output or target tensors")
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -182,4 +174,4 @@ if __name__ == '__main__':
                 break
 
     # Save the trained model
-    torch.save(model.state_dict(), args.save_dir + args.name + '.pth')
+    torch.save(best_model_wts, args.save_dir + args.name + '.pth')
