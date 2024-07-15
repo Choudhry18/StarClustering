@@ -1,0 +1,177 @@
+import os
+import sys
+import time
+import numpy as np
+import pickle
+import argparse
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.utils.data as torch_du
+from torch.autograd import Variable
+from sklearn.model_selection import train_test_split
+from torchvision.models import resnet18  # or resnet50, resnet101, etc.
+import torch.nn.init as init
+
+
+def init_weights(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        init.xavier_normal_(m.weight)
+        if m.bias is not None:
+            m.bias.data.fill_(0.01)
+
+
+def parse_args():
+    """
+    Parse input arguments
+    """
+    parser = argparse.ArgumentParser(description='Train a model for star cluser classification')
+    parser.add_argument('--test-batch-size', type=int, default=16, metavar='N',
+                        help='input batch size for testing (default: 64)')
+    parser.add_argument('--data_dir', dest='data_dir', help='test dataset directory',
+                        default='data/', type=str)
+    parser.add_argument('--dataset', dest='dataset', help='training dataset file reference',
+                        default='raw_32x32', type=str)
+    parser.add_argument('--gpu', dest='gpu', help='CUDA visible device',
+                        default='', type=str)
+    parser.add_argument('--cuda', action='store_true', default=False,
+                        help='enables CUDA training')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--save_dir', dest='save_dir', help='save dir for scores',
+                        default='model/', type=str)
+    parser.add_argument('--checkpoint', dest='checkpoint',
+                        help='checkpoint to load network', default='', type=str)
+    parser.add_argument('--name', dest='name',
+                        help='trained model name', default='best_model', type=str)
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+
+    args = parse_args()
+
+    # loading dataset
+    with open('data/train_raw_32x32.dat', 'rb') as infile:
+        dset = pickle.load(infile)
+    train_data, train_labels = dset['data'], dset['labels']
+    mean = np.load(args.data_dir+'mean.npy')
+    with open('data/val_raw_32x32.dat', 'rb') as infile:
+        dset = pickle.load(infile)
+    val_data, val_labels = dset['data'], dset['labels']
+    train_data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    val_data -= mean[np.newaxis,:,np.newaxis,np.newaxis]
+    label_frequencies = np.bincount(train_labels)
+    for label, frequency in enumerate(label_frequencies):
+        print(f"Label {label}: {frequency} occurrences")
+    
+    tdata = torch.from_numpy(train_data)
+    tdata = tdata.float()
+    tlabel = torch.from_numpy(train_labels)
+    tlabel = tlabel.long()
+    vdata = torch.from_numpy(val_data)
+    vdata = vdata.float()
+    vlabel = torch.from_numpy(val_labels)
+    vlabel = vlabel.long()
+    print(tdata.shape, tlabel.shape)
+    print(vdata.shape, vlabel.shape)
+    testd = torch_du.TensorDataset(tdata, tlabel)
+    train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=True) 
+    vald = torch_du.TensorDataset(vdata, vlabel)
+    val_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
+    args.cuda = args.cuda and torch.cuda.is_available()
+
+    if args.gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+    # Set seeds for reproducibility
+    torch.manual_seed(args.seed)
+    if args.cuda:
+        torch.cuda.manual_seed(args.seed)
+
+    # Use a modified ResNet model
+    model = resnet18(pretrained=False)
+    model.conv1 = nn.Conv2d(5, model.conv1.out_channels, kernel_size=model.conv1.kernel_size, 
+                            stride=model.conv1.stride, padding=model.conv1.padding, bias=False)
+    num_features = model.fc.in_features
+    model.fc = nn.Linear(num_features, 4)
+
+    model.apply(init_weights)
+    learning_rate = 1e-4
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
+
+    # Gradient clipping
+    max_grad_norm = 1.0
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+
+    if args.checkpoint != '':
+        model_dict = model.state_dict()
+        if args.cuda:
+            pretrained_dict = torch.load(args.save_dir+args.checkpoint + '.pth')
+        else:
+            pretrained_dict = torch.load(args.save_dir+args.checkpoint, map_location=torch.device('cpu'))
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and v.size() == model_dict[k].size() }
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
+    if args.cuda:
+        model.cuda()
+
+
+    start_time = time.time()
+    # Training loop
+    num_epochs = 15
+    best_val_loss = float('inf')
+    patience = 3  # for early stopping
+    patience_counter = 0
+
+    for epoch in range(num_epochs):
+        model.train()
+        running_loss = 0.0
+    
+        for data, target in train_loader:
+            if args.cuda:
+                data, target = data.cuda(), target.cuda()
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        # Validation
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for data, target in val_loader:
+                if args.cuda:
+                    data, target = data.cuda(), target.cuda()
+                output = model(data)
+                loss = criterion(output, target)
+                val_loss += loss.item()
+                _, predicted = torch.max(output.data, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+
+        val_loss /= len(val_loader)
+        val_accuracy = 100 * correct / total
+
+        print(f'Epoch {epoch+1}, Train Loss: {running_loss/len(train_loader)}, Val Loss: {val_loss}, Val Accuracy: {val_accuracy}%')
+
+        # Early stopping
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_wts = model.state_dict()
+            patience_counter = 0
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                print("Early stopping")
+                break
+
+    # Save the trained model
+    torch.save(best_model_wts, args.save_dir + args.name + '.pth')
