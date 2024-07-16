@@ -79,7 +79,7 @@ if __name__ == '__main__':
     testd = torch_du.TensorDataset(tdata, tlabel)
     train_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=True) 
     vald = torch_du.TensorDataset(vdata, vlabel)
-    val_loader = torch_du.DataLoader(testd, batch_size=args.test_batch_size, shuffle=False) 
+    val_loader = torch_du.DataLoader(vald, batch_size=args.test_batch_size, shuffle=False) 
     args.cuda = args.cuda and torch.cuda.is_available()
 
     if args.gpu:

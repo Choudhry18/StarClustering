@@ -42,11 +42,11 @@ if __name__ == '__main__':
     with open(dataset_path, 'rb') as infile:
         dset = pickle.load(infile)
     data, labels = dset['data'] , dset['labels']
-    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.2)
+    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.2, random_state=42)
     test_dataset = {"data" : data_test, "labels": label_test}
     with open('data/test_raw_32x32.dat', 'wb') as outfile:
         pickle.dump(test_dataset, outfile, pickle.HIGHEST_PROTOCOL)
-    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.1)
+    data, data_test, labels, label_test = train_test_split(data, labels, test_size=0.1, random_state=42)
     val_dataset = {"data" : data_test, "labels": label_test}
     with open('data/val_raw_32x32.dat', 'wb') as outfile:
         pickle.dump(val_dataset, outfile, pickle.HIGHEST_PROTOCOL)
